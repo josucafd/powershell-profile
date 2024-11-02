@@ -1,22 +1,22 @@
-# Ensure the script can run with elevated privileges
+# Verificar se o script está sendo executado com privilégios elevados
 if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Warning "Please run this script as an Administrator!"
+    Write-Warning "Por favor, execute este script como Administrador!"
     break
 }
 
-# Function to test internet connectivity
+# Função para testar a conectividade com a internet
 function Test-InternetConnection {
     try {
         $testConnection = Test-Connection -ComputerName www.google.com -Count 1 -ErrorAction Stop
         return $true
     }
     catch {
-        Write-Warning "Internet connection is required but not available. Please check your connection."
+        Write-Warning "Conexão com a internet é necessária, mas não está disponível. Verifique sua conexão."
         return $false
     }
 }
 
-# Function to install Nerd Fonts
+# Função para instalar Nerd Fonts
 function Install-NerdFonts {
     param (
         [string]$FontName = "CascadiaCode",
@@ -50,23 +50,23 @@ function Install-NerdFonts {
             Remove-Item -Path $extractPath -Recurse -Force
             Remove-Item -Path $zipFilePath -Force
         } else {
-            Write-Host "Font ${FontDisplayName} already installed"
+            Write-Host "Fonte ${FontDisplayName} já está instalada"
         }
     }
     catch {
-        Write-Error "Failed to download or install ${FontDisplayName} font. Error: $_"
+        Write-Error "Falha ao baixar ou instalar a fonte ${FontDisplayName}. Erro: $_"
     }
 }
 
-# Check for internet connectivity before proceeding
+# Verificar conectividade com a internet antes de prosseguir
 if (-not (Test-InternetConnection)) {
     break
 }
 
-# Profile creation or update
+# Criação ou atualização do perfil
 if (!(Test-Path -Path $PROFILE -PathType Leaf)) {
     try {
-        # Detect Version of PowerShell & Create Profile directories if they do not exist.
+        # Detectar a versão do PowerShell e criar diretórios de perfil, se não existirem
         $profilePath = ""
         if ($PSVersionTable.PSEdition -eq "Core") {
             $profilePath = "$env:userprofile\Documents\Powershell"
@@ -79,64 +79,65 @@ if (!(Test-Path -Path $PROFILE -PathType Leaf)) {
             New-Item -Path $profilePath -ItemType "directory"
         }
 
-        Invoke-RestMethod https://github.com/ChrisTitusTech/powershell-profile/raw/main/Microsoft.PowerShell_profile.ps1 -OutFile $PROFILE
-        Write-Host "The profile @ [$PROFILE] has been created."
-        Write-Host "If you want to make any personal changes or customizations, please do so at [$profilePath\Profile.ps1] as there is an updater in the installed profile which uses the hash to update the profile and will lead to loss of changes"
+        Invoke-RestMethod https://raw.githubusercontent.com/josucafd/powershell-profile/main/Microsoft.PowerShell_profile.ps1 -OutFile $PROFILE
+        Write-Host "O perfil em [$PROFILE] foi criado."
+        Write-Host "Se desejar fazer alterações ou personalizações, faça-as em [$profilePath\Profile.ps1], pois há um atualizador no perfil instalado que usa hash para atualizar o perfil, o que pode resultar na perda de alterações."
     }
     catch {
-        Write-Error "Failed to create or update the profile. Error: $_"
+        Write-Error "Falha ao criar ou atualizar o perfil. Erro: $_"
     }
 }
 else {
     try {
         Get-Item -Path $PROFILE | Move-Item -Destination "oldprofile.ps1" -Force
-        Invoke-RestMethod https://github.com/ChrisTitusTech/powershell-profile/raw/main/Microsoft.PowerShell_profile.ps1 -OutFile $PROFILE
-        Write-Host "The profile @ [$PROFILE] has been created and old profile removed."
-        Write-Host "Please back up any persistent components of your old profile to [$HOME\Documents\PowerShell\Profile.ps1] as there is an updater in the installed profile which uses the hash to update the profile and will lead to loss of changes"
+        Invoke-RestMethod https://raw.githubusercontent.com/josucafd/powershell-profile/main/Microsoft.PowerShell_profile.ps1 -OutFile $PROFILE
+        Write-Host "O perfil em [$PROFILE] foi criado e o perfil antigo foi removido."
+        Write-Host "Faça backup de qualquer componente persistente do seu perfil antigo em [$HOME\Documents\PowerShell\Profile.ps1], pois há um atualizador no perfil instalado que usa hash para atualizar o perfil, o que pode resultar na perda de alterações."
     }
     catch {
-        Write-Error "Failed to backup and update the profile. Error: $_"
+        Write-Error "Falha ao fazer backup e atualizar o perfil. Erro: $_"
     }
 }
 
-# OMP Install
+# Instalação do Oh My Posh
 try {
     winget install -e --accept-source-agreements --accept-package-agreements JanDeDobbeleer.OhMyPosh
 }
 catch {
-    Write-Error "Failed to install Oh My Posh. Error: $_"
+    Write-Error "Falha ao instalar Oh My Posh. Erro: $_"
 }
 
-# Font Install
+# Instalação da Fonte
 Install-NerdFonts -FontName "CascadiaCode" -FontDisplayName "CaskaydiaCove NF"
 
-# Final check and message to the user
+# Verificação final e mensagem para o usuário
 if ((Test-Path -Path $PROFILE) -and (winget list --name "OhMyPosh" -e) -and ($fontFamilies -contains "CaskaydiaCove NF")) {
-    Write-Host "Setup completed successfully. Please restart your PowerShell session to apply changes."
+    Write-Host "Configuração concluída com sucesso. Reinicie sua sessão do PowerShell para aplicar as mudanças."
 } else {
-    Write-Warning "Setup completed with errors. Please check the error messages above."
+    Write-Warning "Configuração concluída com erros. Verifique as mensagens de erro acima."
 }
 
-# Choco install
+# Instalação do Chocolatey
 try {
     Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 }
 catch {
-    Write-Error "Failed to install Chocolatey. Error: $_"
+    Write-Error "Falha ao instalar o Chocolatey. Erro: $_"
 }
 
-# Terminal Icons Install
+# Instalação do Terminal Icons
 try {
     Install-Module -Name Terminal-Icons -Repository PSGallery -Force
 }
 catch {
-    Write-Error "Failed to install Terminal Icons module. Error: $_"
+    Write-Error "Falha ao instalar o módulo Terminal Icons. Erro: $_"
 }
-# zoxide Install
+
+# Instalação do zoxide
 try {
     winget install -e --id ajeetdsouza.zoxide
-    Write-Host "zoxide installed successfully."
+    Write-Host "zoxide instalado com sucesso."
 }
 catch {
-    Write-Error "Failed to install zoxide. Error: $_"
+    Write-Error "Falha ao instalar o zoxide. Erro: $_"
 }
